@@ -7,7 +7,7 @@ module tetris_engine (
     output reg [11:0] rgb_out, // Explicitly 12-bit RGB
     output reg [15:0] score
 );
-    parameter X_START = 220, Y_START = 40, BLOCK_SIZE = 20;
+    parameter X_START = 220, Y_START = 40;   // board origin; cells are 20 x 20 px
 
     (* ram_style = "registers" *) reg [2:0] grid [0:199]; // 1D Array for stability
     
@@ -24,6 +24,9 @@ module tetris_engine (
 
     reg [7:0] lfsr;
     reg [2:0] piece_type;
+    /* verilator lint_off UNUSEDSIGNAL */
+    wire [7:0] lfsr_mod7 = lfsr % 8'd7;     // next piece type, 0..6 (top bits always 0)
+    /* verilator lint_on UNUSEDSIGNAL */
 
     always @(posedge clk or posedge reset) begin
         if (reset) lfsr <= 8'hAA; 
@@ -113,7 +116,7 @@ module tetris_engine (
                        (grid[scan_row*10 + 8] != 0) && (grid[scan_row*10 + 9] != 0);
 
     // FSM
-    integer r, c, dx, dy;
+    integer r, c;
     always @(posedge clk or posedge reset) begin
         if (reset) begin
             state <= START_SCREEN; score <= 0;
@@ -125,7 +128,7 @@ module tetris_engine (
                 SPAWN: begin
                     curr_x <= 3; curr_y <= -2; 
                     rot_state <= 0; test_rot <= 0; 
-                    piece_type <= lfsr % 7; state <= WAIT;
+                    piece_type <= lfsr_mod7[2:0]; state <= WAIT;
                 end
                 
                 WAIT: begin
@@ -158,9 +161,9 @@ module tetris_engine (
                 LAND: begin
                     for (r = 0; r < 20; r = r + 1) begin
                         for (c = 0; c < 10; c = c + 1) begin
-                            dx = c - curr_x; dy = r - curr_y;
-                            if (dx >= 0 && dx < 4 && dy >= 0 && dy < 4) begin
-                                if (active_mask[15 - (dy*4 + dx)]) grid[r * 10 + c] <= piece_id;
+                            // cell (r, c) inside the piece's 4x4 box?
+                            if (c - curr_x >= 0 && c - curr_x < 4 && r - curr_y >= 0 && r - curr_y < 4) begin
+                                if (active_mask[15 - ((r - curr_y)*4 + (c - curr_x))]) grid[r * 10 + c] <= piece_id;
                             end
                         end
                     end
