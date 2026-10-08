@@ -92,6 +92,10 @@ Vivado: create a project for `xc7a100tcsg324-1`, add all `*.v` files in the
 repository root and `constraints/nexys_a7.xdc` (pins from Digilent's master
 XDC), set `nexys_tetris_top` as top and generate the bitstream.
 
+Vivado 2025.1 result (xc7a100tcsg324-1, placed and routed): timing is met
+at the 25 MHz pixel clock with +22.6 ns of setup slack (about 57 MHz
+maximum), using 4,725 LUTs and 943 flip-flops, no block RAM and no DSPs.
+
 ## Files
 
 ```
